@@ -91,7 +91,13 @@ async function handleApi(req, res) {
         const tx2 = await escrow.release(userAddr, total, { nonce: n2 });
         await tx2.wait();
 
-        const receipt = handleEscrowRelease(upiEngine, { txHash: tx2.hash, logIndex: 0, user: userAddr, bankAccountId: "bank-demo", amount: total });
+        let receipt;
+        if (process.env.UPI_PROVIDER_URL) {
+          const r = await fetch(process.env.UPI_PROVIDER_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ txHash: tx2.hash, user: userAddr, bankAccountId: "bank-demo", amount: total }) });
+          receipt = await r.json();
+        } else {
+          receipt = handleEscrowRelease(upiEngine, { txHash: tx2.hash, logIndex: 0, user: userAddr, bankAccountId: "bank-demo", amount: total });
+        }
 
         send(res, 200, JSON.stringify({
           ok: true,
