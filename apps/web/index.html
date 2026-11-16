@@ -89,14 +89,14 @@
       </div>
     </header>
 
-    <div class="stats" style="margin-bottom:16px;">
+    <div class="stats" id="statsBlock" style="margin-bottom:16px; display:none;">
       <div class="card stat"><span class="lbl">EcoScore</span><span class="val" id="ecoScore">0</span></div>
       <div class="card stat"><span class="lbl">GreenPoints</span><span class="val" id="points">0</span></div>
       <div class="card stat"><span class="lbl">Credits (tCO2e x100)</span><span class="val" id="credits">0</span></div>
       <div class="card stat"><span class="lbl">Earned (INR)</span><span class="val" id="earned">₹0</span></div>
     </div>
 
-    <div class="grid">
+    <div class="grid" id="mainGrid">
       <div class="card">
         <h3>1. Sign in (gasless)</h3>
         <p class="muted">Web3Auth social login. No wallet, no seed phrase, no gas.</p>
@@ -107,7 +107,7 @@
         <div id="account" class="muted" style="margin-top:10px;"></div>
       </div>
 
-      <div class="card">
+      <div class="card" id="connectCard" style="display:none;">
         <h3>2. Connect data source</h3>
         <p class="muted">Passive telemetry via AA / mobility / consumption APIs.</p>
         <div class="row">
@@ -121,7 +121,7 @@
         <div id="sourceStatus" class="muted" style="margin-top:10px;"></div>
       </div>
 
-      <div class="card">
+      <div class="card" id="actionCard" style="display:none;">
         <h3>3. Perform green action</h3>
         <p class="muted">TLSNotary + zk threshold proof + anti-fraud checks.</p>
         <div class="row">
@@ -136,7 +136,7 @@
         <div class="progress"><div id="proofProgress"></div></div>
       </div>
 
-      <div class="card">
+      <div class="card" id="settlementCard" style="display:none;">
         <h3>4. Settlement (mock UPI)</h3>
         <p class="muted">70% user share paid instantly. Node 15%, treasury 15%.</p>
         <div id="payout" class="muted">No payouts yet.</div>

@@ -64,6 +64,10 @@ loginBtn.addEventListener("click", async () => {
   connectBtn.disabled = false;
   logoutBtn.disabled = false;
   loginBtn.disabled = true;
+  (document.getElementById("statsBlock") as HTMLElement).style.display = "grid";
+  (document.getElementById("connectCard") as HTMLElement).style.display = "block";
+  (document.getElementById("actionCard") as HTMLElement).style.display = "block";
+  (document.getElementById("settlementCard") as HTMLElement).style.display = "block";
   log("Signed in. Connected to hardhat node. Sponsor ready.");
 });
 
@@ -76,6 +80,10 @@ logoutBtn.addEventListener("click", () => {
   logoutBtn.disabled = true;
   connectedSource = "";
   sourceStatus.textContent = "";
+  (document.getElementById("statsBlock") as HTMLElement).style.display = "none";
+  (document.getElementById("connectCard") as HTMLElement).style.display = "none";
+  (document.getElementById("actionCard") as HTMLElement).style.display = "none";
+  (document.getElementById("settlementCard") as HTMLElement).style.display = "none";
   log("Signed out.");
 });
 
