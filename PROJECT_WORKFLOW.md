@@ -6,6 +6,13 @@
 
 ---
 
+## 0. Current Progress
+
+- MVP demo (on-chain + UPI) verified: `packages/contracts/scripts/demo.ts`.
+- Gasless onboarding web demo live: `apps/web`.
+- Verification pipeline skeleton: `packages/oracle/src/verification.ts`.
+- Next stage: real TLSNotary/Circom integration, then mainnet L2 deploy + audits.
+
 ## 0. Executive Summary
 
 EcoLedger is a trustless DePIN (Decentralized Physical Infrastructure) protocol and personal sustainability wallet that converts verified individual green behavior (energy, mobility, consumption, waste) into fractional, tradeable carbon credits, aggregates them into institutional-grade offsets, and settles 70% of B2B revenue as zero-gas UPI payouts to users. Users never touch crypto.
