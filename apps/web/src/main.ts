@@ -1,6 +1,3 @@
-declare const ethers: any;
-
-import { MockUpiEngine, handleEscrowRelease } from "./settlement.js";
 
 const logEl = document.getElementById("log")!;
 const accountEl = document.getElementById("account")!;
@@ -23,19 +20,12 @@ const actionBtn = document.getElementById("actionBtn") as HTMLButtonElement;
 const sourceSelect = document.getElementById("sourceSelect") as HTMLSelectElement;
 const actionSelect = document.getElementById("actionSelect") as HTMLSelectElement;
 
-const HARDHAT_DEPLOYER_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
-
-let provider: any;
-let sponsor: any; // deployer acts as gas sponsor (gasless)
-let user: any;
-let addresses: any = null;
 let connectedSource = "";
 let ecoScore = 0;
 let points = 0;
 let credits = 0;
 let earnedPaise = 0;
-let nullifierCounter = 0;
-const upiEngine = new MockUpiEngine();
+let userEmail = "";
 
 function log(msg: string) {
   const line = `[${new Date().toLocaleTimeString()}] ${msg}`;
@@ -49,29 +39,63 @@ function updateStats() {
   earnedEl.textContent = "₹" + (earnedPaise / 100).toFixed(2);
 }
 
-async function loadAddresses() {
-  const res = await fetch("./addresses.json");
-  addresses = await res.json();
-  provider = new ethers.JsonRpcProvider(addresses.rpc);
-  sponsor = new ethers.Wallet(HARDHAT_DEPLOYER_KEY, provider);
-  user = new ethers.Wallet(addresses.userKey, provider);
+// Web3Auth (real) if configured, else mock dev login.
+async function web3AuthLogin(): Promise<{ email: string }> {
+  const cfgRes = await fetch("./config.json").catch(() => null);
+  const cfg = cfgRes && cfgRes.ok ? await cfgRes.json() : {};
+  if (cfg.web3authClientId) {
+    try {
+      if (!(window as any).Web3Auth) {
+        await new Promise<void>((resolve, reject) => {
+          const s = document.createElement("script");
+          s.src = "https://cdn.jsdelivr.net/npm/@web3auth/modal@9/dist/modal.umd.min.js";
+          s.onload = () => resolve();
+          s.onerror = () => reject(new Error("Web3Auth SDK load failed"));
+          document.head.appendChild(s);
+        });
+      }
+      const Web3Auth = (window as any).Web3Auth;
+      const web3auth = new Web3Auth.Web3Auth({
+        clientId: cfg.web3authClientId,
+        web3AuthNetwork: "sapphire_devnet",
+      });
+      await web3auth.initModal();
+      const provider = await web3auth.connect();
+      const accounts = await provider.request({ method: "eth_accounts" });
+      log("Web3Auth login successful.");
+      return { email: accounts?.[0] ?? "web3auth-user" };
+    } catch (e: any) {
+      log("Web3Auth failed, falling back to dev login: " + (e?.message ?? e));
+    }
+  } else {
+    log("No Web3Auth client id; using dev mock login.");
+  }
+  return { email: "demo@ecoledger.app" };
 }
 
 loginBtn.addEventListener("click", async () => {
-  if (!addresses) await loadAddresses();
-  accountEl.innerHTML = `<strong>User</strong> ${addresses.user}<br/><strong>Signer</strong> ${user.address}<br/><span class="pill green">Gas sponsored by paymaster</span>`;
-  accountBadge.textContent = user.address.slice(0, 8) + "…" + user.address.slice(-4);
-  connectBtn.disabled = false;
-  logoutBtn.disabled = false;
-  loginBtn.disabled = true;
-  (document.getElementById("statsBlock") as HTMLElement).style.display = "grid";
-  (document.getElementById("connectCard") as HTMLElement).style.display = "block";
-  (document.getElementById("actionCard") as HTMLElement).style.display = "block";
-  (document.getElementById("settlementCard") as HTMLElement).style.display = "block";
-  log("Signed in. Connected to hardhat node. Sponsor ready.");
+  try {
+    const { email } = await web3AuthLogin();
+    userEmail = email;
+    const res = await fetch("/api/addresses");
+    const addresses = await res.json();
+    accountEl.innerHTML = `<strong>User</strong> ${addresses.user}<br/><strong>Email</strong> ${email}<br/><span class="pill green">Gas sponsored by paymaster</span>`;
+    accountBadge.textContent = addresses.user.slice(0, 8) + "…" + addresses.user.slice(-4);
+    connectBtn.disabled = false;
+    logoutBtn.disabled = false;
+    loginBtn.disabled = true;
+    (document.getElementById("statsBlock") as HTMLElement).style.display = "grid";
+    (document.getElementById("connectCard") as HTMLElement).style.display = "block";
+    (document.getElementById("actionCard") as HTMLElement).style.display = "block";
+    (document.getElementById("settlementCard") as HTMLElement).style.display = "block";
+    log("Signed in. Backend sponsor ready.");
+  } catch (e: any) {
+    log("Login failed: " + (e?.message ?? e));
+  }
 });
 
 logoutBtn.addEventListener("click", () => {
+  userEmail = "";
   accountEl.textContent = "";
   accountBadge.textContent = "Not signed in";
   connectBtn.disabled = true;
@@ -104,7 +128,6 @@ actionBtn.addEventListener("click", async () => {
     actionStatus.textContent = "Connect a data source first.";
     return;
   }
-  if (!addresses) await loadAddresses();
   actionBtn.disabled = true;
   actionStatus.textContent = "Generating proof & sending tx (gasless)…";
   proofProgress.style.width = "0%";
@@ -117,62 +140,30 @@ actionBtn.addEventListener("click", async () => {
   }, 120);
 
   try {
-    const vaultAbi = [
-      "function mintCredit(address to, uint256 amount, bytes32 nullifier) external",
-      "function balance(address account) view returns (uint256)",
-    ];
-    const vaultC = new ethers.Contract(addresses.microCreditVault, vaultAbi, sponsor);
-
-    const ecoAbi = ["function mint(address to) external", "function hasToken(address) view returns (bool)"];
-    const ecoC = new ethers.Contract(addresses.ecoScore, ecoAbi, sponsor);
-
-    const escrowAbi = ["function release(address user, uint256 amount) external"];
-    const escrowC = new ethers.Contract(addresses.mockEscrow, escrowAbi, sponsor);
-
-    nullifierCounter += 1;
-    const nullifier = ethers.keccak256(ethers.toUtf8Bytes(`action-${nullifierCounter}`));
-
-    const tx1 = await vaultC.mintCredit(user.address, 10, nullifier);
-    await tx1.wait();
-
-    try {
-      const has = await ecoC.hasToken(user.address);
-      if (!has) {
-        const txEco = await ecoC.mint(user.address);
-        await txEco.wait();
-      }
-    } catch (e) {
-      // ignore
-    }
-
-    const total = 100000;
-    const tx2 = await escrowC.release(user.address, total);
-    await tx2.wait();
-
-    const receipt = handleEscrowRelease(upiEngine, {
-      txHash: tx2.hash,
-      logIndex: 0,
-      user: user.address,
-      bankAccountId: "bank-demo",
-      amount: total,
+    const res = await fetch("/api/action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: actionSelect.value }),
     });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "action failed");
 
-    ecoScore += 5;
-    points += 100;
-    credits += 10;
-    earnedPaise += receipt.amountPaise;
+    ecoScore += data.ecoScoreDelta;
+    points += data.pointsDelta;
+    credits += data.creditsDelta;
+    earnedPaise += data.payout.amountPaise;
     updateStats();
 
     clearInterval(timer);
     proofProgress.style.width = "100%";
 
     actionStatus.innerHTML = `Verified <span class="pill green">TLSNotary ✓</span> <span class="pill green">zk ✓</span> <span class="pill green">anti-fraud ✓</span> — credit minted.`;
-    payoutEl.textContent = `Latest: ${receipt.amountPaise} paise — ${receipt.txId}`;
+    payoutEl.textContent = `Latest: ${data.payout.amountPaise} paise — ${data.payout.txId}`;
     const li = document.createElement("li");
-    li.innerHTML = `<span>${actionSelect.value}</span><span class="pill green">+100 pts · ₹${(receipt.amountPaise / 100).toFixed(2)}</span>`;
+    li.innerHTML = `<span>${actionSelect.value}</span><span class="pill green">+${data.pointsDelta} pts · ₹${(data.payout.amountPaise / 100).toFixed(2)}</span>`;
     payoutList.prepend(li);
 
-    log(`Action verified & minted (tx ${tx1.hash.slice(0, 12)}…). UPI payout ${receipt.amountPaise} paise (${receipt.status}).`);
+    log(`Action verified & minted (tx ${data.mintTx.slice(0, 12)}…). UPI payout ${data.payout.amountPaise} paise (${data.payout.status}).`);
   } catch (e: any) {
     clearInterval(timer);
     proofProgress.style.width = "0%";
@@ -185,4 +176,3 @@ actionBtn.addEventListener("click", async () => {
 
 updateStats();
 log("EcoLedger MVP demo ready. Sign in to begin.");
-loadAddresses().then(() => log("Loaded contract addresses.")).catch((e) => log("Failed to load addresses: " + e));

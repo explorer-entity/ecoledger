@@ -1,0 +1,4 @@
+{
+  "web3authClientId": "",
+  "note": "Set a Web3Auth client ID from https://dashboard.web3auth.io to enable real Google sign-in. Leave empty for dev mock login."
+}
