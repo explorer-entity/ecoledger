@@ -1,0 +1,17 @@
+{
+  "name": "@ecoledger/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'dev server not configured yet'",
+    "build": "echo 'build not configured yet'",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "echo 'no tests'"
+  },
+  "dependencies": {
+    "@ecoledger/shared": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}

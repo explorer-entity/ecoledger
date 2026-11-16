@@ -1,0 +1,18 @@
+{
+  "name": "ecoledger",
+  "version": "0.1.0",
+  "private": true,
+  "description": "EcoLedger: trustless DePIN protocol bridging individuals to the voluntary carbon market.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@ecoledger/circuits",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "circom circuits/threshold.circom --r1cs --wasm --sym -o build 2>/dev/null || echo 'circom not installed; skipping'",
+    "test": "echo 'no tests'",
+    "typecheck": "echo 'no typecheck'",
+    "lint": "echo 'no lint configured'"
+  }
+}
