@@ -35,3 +35,24 @@ export class MockUpiEngine {
 }
 
 export const mockUpi = new MockUpiEngine();
+
+// --- Escrow release wiring ---
+
+export interface EscrowReleaseEvent {
+  txHash: string;
+  logIndex: number;
+  user: string;
+  bankAccountId: string;
+  amount: number;
+}
+
+export function idempotencyKey(e: EscrowReleaseEvent): string {
+  return `${e.txHash}:${e.logIndex}`;
+}
+
+export function handleEscrowRelease(
+  engine: MockUpiEngine,
+  event: EscrowReleaseEvent
+): PayoutReceipt {
+  return engine.releaseToUser(event.bankAccountId, event.amount, idempotencyKey(event));
+}

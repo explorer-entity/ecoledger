@@ -7,7 +7,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "build": "tsc -p tsconfig.json",
-    "test": "echo 'no tests'"
+    "test": "node --test --experimental-strip-types test/*.test.ts"
   },
   "dependencies": {
     "@ecoledger/shared": "*"
