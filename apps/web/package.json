@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "echo 'dev server not configured yet'",
+    "dev": "python -m http.server 5173",
     "build": "echo 'build not configured yet'",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "echo 'no tests'"

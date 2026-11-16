@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoLedger — Gasless Onboarding Demo</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 40px auto; padding: 0 16px; }
+    button { padding: 10px 16px; margin: 8px 0; cursor: pointer; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    .muted { color: #666; font-size: 14px; }
+    #log { font-family: monospace; font-size: 13px; white-space: pre-wrap; background: #f5f5f5; padding: 12px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>EcoLedger</h1>
+  <p class="muted">Gasless onboarding MVP demo (mock Web3Auth + paymaster)</p>
+
+  <div class="card">
+    <h3>1. Sign in (gasless)</h3>
+    <button id="loginBtn">Sign in with Google</button>
+    <div id="account" class="muted"></div>
+  </div>
+
+  <div class="card">
+    <h3>2. Perform green action</h3>
+    <button id="actionBtn" disabled>Log green action (no gas)</button>
+    <div id="actionStatus" class="muted"></div>
+  </div>
+
+  <div class="card">
+    <h3>3. Settlement (mock UPI)</h3>
+    <div id="payout" class="muted"></div>
+  </div>
+
+  <div class="card">
+    <h3>Log</h3>
+    <div id="log"></div>
+  </div>
+
+  <script type="module" src="./src/main.ts"></script>
+</body>
+</html>
