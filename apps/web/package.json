@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "python -m http.server 5173",
-    "build": "echo 'build not configured yet'",
+    "build": "tsc -p tsconfig.json && node -e \"const fs=require('fs'); fs.copyFileSync('../../packages/settlement/dist/index.js','./dist/settlement.js');\"",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "echo 'no tests'"
   },
